@@ -1,123 +1,82 @@
-# Phase-1 Feature Specification: In-Memory Todo CLI
+# Task CRUD Operations
 
-## 1. Feature Overview
+## User Stories
 
-The Phase-1 Todo CLI feature establishes a foundational command-line interface application for managing personal todo tasks. This single-user, in-memory system provides basic CRUD (Create, Read, Update, Delete) operations for todo tasks during runtime. The purpose of this phase is to establish core task management functionality with a simple CLI interface, serving as the foundation for future phase enhancements.
+### User Story 1 - Create Tasks (Priority: P1)
+As an authenticated user, I want to create new tasks so that I can organize my work and responsibilities.
 
-This phase focuses exclusively on in-memory operations with no persistence across application runs, providing a clean implementation ground for basic task management operations while adhering to the hackathon's spec-driven development methodology.
+**Why this priority**: Creating tasks is the fundamental functionality of a todo application.
 
-## 2. User Stories
+**Independent Test**: User can successfully add a new task to their personal task list after authenticating.
 
-### 2.1 Add a Task
-As a user, I want to add a new todo task with a title so that I can track items I need to complete.
+**Acceptance Scenarios**:
+1. Given I am logged in, When I submit a new task with a title, Then the task appears in my task list
+2. Given I am logged in, When I submit a new task with title and description, Then the task appears in my task list with both fields preserved
 
-### 2.2 List Tasks
-As a user, I want to view all my current todo tasks so that I can see what needs to be done.
+---
 
-### 2.3 Update a Task
-As a user, I want to modify an existing todo task's title so that I can correct or refine my task descriptions.
+### User Story 2 - View Task List (Priority: P1)
+As an authenticated user, I want to view my list of tasks so that I can see what I need to do.
 
-### 2.4 Mark Task Complete/Incomplete
-As a user, I want to mark a task as complete or incomplete so that I can track my progress.
+**Why this priority**: Viewing tasks is essential for the core functionality of a todo application.
 
-### 2.5 Delete a Task
-As a user, I want to remove a task from my list so that I can clean up completed or unwanted tasks.
+**Independent Test**: User can see all their tasks in a list after authenticating.
 
-## 3. Functional Requirements
+**Acceptance Scenarios**:
+1. Given I am logged in, When I navigate to the task list page, Then I see all my tasks
+2. Given I am logged in with multiple tasks, When I refresh the page, Then I see all my tasks again
 
-### 3.1 Task Attributes
-- Each task must have a unique numeric identifier (ID) assigned automatically
-- Each task must have a title (string) provided by the user
-- Each task must have a status (boolean) indicating completion state (default: incomplete)
-- Task titles must be non-empty strings
+---
 
-### 3.2 CLI Commands
-- `add <title>` - Creates a new task with the provided title
-- `list` - Displays all tasks with their ID, title, and completion status
-- `update <id> <new_title>` - Updates the title of the task with the specified ID
-- `complete <id>` - Marks the task with the specified ID as complete
-- `incomplete <id>` - Marks the task with the specified ID as incomplete
-- `delete <id>` - Removes the task with the specified ID from the list
+### User Story 3 - Update Tasks (Priority: P2)
+As an authenticated user, I want to update my tasks so that I can modify their details as needed.
 
-### 3.3 CLI Interaction
-- The application accepts commands through standard input
-- The application displays results through standard output
-- Commands follow the format: `<command> [arguments]`
-- The application provides clear feedback for all operations
+**Why this priority**: Allows users to modify existing tasks without recreating them.
 
-## 4. Acceptance Criteria
+**Independent Test**: User can modify the title or description of an existing task.
 
-### 4.1 Add Task
-- Given an empty task list, when I add a task with a valid title, then the task appears in the list with a unique ID and incomplete status
-- Given a task list with existing tasks, when I add a new task, then the new task appears with the next sequential ID
-- When I attempt to add a task with an empty title, then the application shows an error message and no task is added
+**Acceptance Scenarios**:
+1. Given I am logged in and have a task, When I update the task title, Then the change is reflected in my task list
+2. Given I am logged in and have a task, When I update the task description, Then the change is reflected in my task list
 
-### 4.2 List Tasks
-- Given any task list state, when I list tasks, then all tasks are displayed with their ID, title, and completion status
-- Given an empty task list, when I list tasks, then an appropriate message indicates no tasks exist
-- When tasks exist, they are displayed in the format: "ID - Title [Complete/Incomplete]"
+---
 
-### 4.3 Update Task
-- Given a task exists with ID X, when I update the task with a new title, then the task's title changes to the new value
-- When I attempt to update a non-existent task ID, then the application shows an error message
-- When I attempt to update with an empty title, then the application shows an error message and the title remains unchanged
+### User Story 4 - Delete Tasks (Priority: P2)
+As an authenticated user, I want to delete tasks so that I can remove items I no longer need.
 
-### 4.4 Mark Task Complete/Incomplete
-- Given a task exists with ID X, when I mark it as complete, then the task's status changes to complete
-- Given a task exists with ID X, when I mark it as incomplete, then the task's status changes to incomplete
-- When I attempt to mark a non-existent task ID, then the application shows an error message
+**Why this priority**: Allows users to clean up their task list by removing completed or irrelevant tasks.
 
-### 4.5 Delete Task
-- Given a task exists with ID X, when I delete the task, then the task is removed from the list
-- When I attempt to delete a non-existent task ID, then the application shows an error message
-- After deletion, remaining tasks maintain their original IDs (no renumbering)
+**Independent Test**: User can remove a task from their task list permanently.
 
-## 5. Edge Cases and Validation
+**Acceptance Scenarios**:
+1. Given I am logged in and have a task, When I delete the task, Then it no longer appears in my task list
+2. Given I am logged in and have multiple tasks, When I delete one task, Then only that task is removed from my list
 
-### 5.1 Empty Task List
-- When listing tasks with an empty list, display "No tasks found"
-- When attempting to update/delete/complete operations on an empty list, show appropriate error messages
+---
 
-### 5.2 Invalid Task Identifiers
-- When providing a non-numeric ID, show "Invalid task ID: must be a number"
-- When providing a negative or zero ID, show "Invalid task ID: must be a positive integer"
-- When providing an ID that doesn't exist, show "Task not found with ID: [provided_id]"
+### User Story 5 - Mark Task Complete/Incomplete (Priority: P2)
+As an authenticated user, I want to mark tasks as complete or incomplete so that I can track my progress.
 
-### 5.3 Empty or Invalid Input
-- When adding a task with empty or whitespace-only title, show "Task title cannot be empty"
-- When updating a task with empty or whitespace-only title, show "Task title cannot be empty"
-- When providing insufficient arguments to commands, show "Insufficient arguments: [command] requires [expected_args]"
+**Why this priority**: Essential for tracking task completion status.
 
-### 5.4 Repeated Operations
-- When marking an already complete task as complete, the task remains complete with no error
-- When marking an already incomplete task as incomplete, the task remains incomplete with no error
-- When attempting to update a task with the same title, the operation succeeds without change
+**Independent Test**: User can toggle the completion status of their tasks.
 
-## 6. Non-Functional Constraints
+**Acceptance Scenarios**:
+1. Given I am logged in and have an incomplete task, When I mark it complete, Then its status updates to complete
+2. Given I am logged in and have a completed task, When I mark it incomplete, Then its status updates to incomplete
 
-### 6.1 Simplicity Requirements
-- The implementation must remain simple and focused on core functionality
-- No advanced features beyond basic CRUD operations
-- No external dependencies beyond standard Python libraries
+## Acceptance Criteria
+- All CRUD operations must be authenticated via JWT
+- Users can only access their own tasks
+- Task completion status can be toggled
+- Tasks must have at least a title field
 
-### 6.2 Behavioral Requirements
-- The application must exhibit deterministic behavior for identical inputs
-- Command processing must be synchronous with immediate feedback
-- Error messages must be clear and actionable
+## Task Ownership
+- Each task is associated with a specific authenticated user
+- Users can only view, edit, or delete their own tasks
+- The backend enforces user_id ownership on all operations
 
-### 6.3 External Dependencies
-- No dependency on external services, databases, or file systems
-- No network connectivity requirements
-- No third-party libraries beyond Python standard library
-
-## 7. Phase Boundary Declaration
-
-This specification applies EXCLUSIVELY to Phase-1 of the hackathon project. Any features, functionality, or capabilities beyond the scope defined in this document are explicitly out of scope for Phase-1 implementation. Future phases will be defined through separate, distinct specifications that may extend or modify the behavior described herein.
-
-The following are explicitly excluded from Phase-1 scope:
-- File-based persistence or database storage
-- Multi-user functionality or authentication
-- Web interfaces or API endpoints
-- Advanced search, filtering, or sorting capabilities
-- Task categorization, priorities, or due dates
-- Integration with external services or APIs
+## Completion Toggle Behavior
+- Tasks have a boolean 'completed' field that can be toggled
+- Changing completion status updates the task in the database
+- UI reflects the current completion status immediately

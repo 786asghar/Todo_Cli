@@ -9,7 +9,7 @@ The relationship between specification and implementation is one of strict compl
 ## 2. Assumptions and Preconditions
 
 ### 2.1 Existing Artifacts
-- The AGENTS.md constitution document exists and defines governance rules
+- The constitution.md constitution document exists and defines governance rules
 - The Phase-1 feature specification (task-crud.md) exists and defines requirements
 - All participants understand the spec-driven development methodology
 - Python development environment is available for implementation
