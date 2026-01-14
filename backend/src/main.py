@@ -1,0 +1,223 @@
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
+from sqlmodel import Session, select
+from typing import List
+import uuid
+from datetime import datetime
+
+try:
+    # Try relative imports first (when running as package)
+    from .database import get_session, create_db_and_tables
+    from .models.task import Task, TaskRead, TaskCreate, TaskUpdate
+    from .models.skill import Skill
+    from .auth.jwt_handler import get_current_user
+    from .api.auth import router as auth_router
+    from .api.skills import router as skills_router
+    from .api.agents import router as agents_router
+    from .agents.agent_registry import AgentRegistry
+    from .agents.config import AgentConfig
+except ImportError:
+    # Fall back to absolute imports (when running directly)
+    import sys
+    import os
+    sys.path.append(os.path.join(os.path.dirname(__file__)))
+    from database import get_session, create_db_and_tables
+    from models.task import Task, TaskRead, TaskCreate, TaskUpdate
+    from models.skill import Skill
+    from auth.jwt_handler import get_current_user
+    from api.auth import router as auth_router
+    from api.skills import router as skills_router
+    from api.agents import router as agents_router
+    from agents.agent_registry import AgentRegistry
+    from agents.config import AgentConfig
+
+app = FastAPI(title="Todo API", version="1.0.0")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins during development
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(auth_router)
+app.include_router(skills_router)
+app.include_router(agents_router)
+
+
+# Add CORS headers to all responses
+@app.middleware("http")
+async def add_cors_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Headers"] = "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    return response
+
+
+# Global agent registry instance
+agent_registry = AgentRegistry()
+
+
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()
+
+    # Initialize default agents
+    try:
+        # Register default agent types
+        from .agents.agents import TaskAgent, PlanningAgent
+
+        agent_registry.register_agent_type("task_agent", TaskAgent)
+        agent_registry.register_agent_type("planning_agent", PlanningAgent)
+
+        # Create default agent instances
+        task_agent_config = AgentConfig(
+            name="task_agent",
+            description="Default task execution agent"
+        )
+        agent_registry.create_and_register(task_agent_config)
+
+        planning_agent_config = AgentConfig(
+            name="planning_agent",
+            description="Default planning agent"
+        )
+        agent_registry.create_and_register(planning_agent_config)
+
+        print("Agent registry initialized with default agents")
+    except Exception as e:
+        print(f"Warning: Could not initialize agent registry: {e}")
+
+
+@app.get("/")
+def read_root():
+    return {"message": "Todo API - Phase 2 Implementation"}
+
+
+@app.post("/api/tasks", response_model=TaskRead, status_code=status.HTTP_201_CREATED)
+def create_task(
+    task: TaskCreate,
+    user_id: str = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    # Create a new task with the authenticated user's ID
+    db_task = Task(
+        title=task.title,
+        description=task.description,
+        completed=task.completed,
+        user_id=uuid.UUID(user_id) if isinstance(user_id, str) else user_id
+    )
+    session.add(db_task)
+    session.commit()
+    session.refresh(db_task)
+    return db_task
+
+
+@app.get("/api/tasks", response_model=List[TaskRead])
+def read_tasks(
+    user_id: str = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    # Get tasks for the authenticated user only
+    user_uuid = uuid.UUID(user_id) if isinstance(user_id, str) else user_id
+    tasks = session.exec(select(Task).where(Task.user_id == user_uuid)).all()
+    return tasks
+
+
+@app.get("/api/tasks/{task_id}", response_model=TaskRead)
+def read_task(
+    task_id: uuid.UUID,
+    user_id: str = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    # Get a specific task for the authenticated user
+    user_uuid = uuid.UUID(user_id) if isinstance(user_id, str) else user_id
+    task = session.get(Task, task_id)
+
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if task.user_id != user_uuid:
+        raise HTTPException(status_code=403, detail="Not authorized to access this task")
+
+    return task
+
+
+@app.put("/api/tasks/{task_id}", response_model=TaskRead)
+def update_task(
+    task_id: uuid.UUID,
+    task_update: TaskUpdate,
+    user_id: str = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    # Update a specific task for the authenticated user
+    user_uuid = uuid.UUID(user_id) if isinstance(user_id, str) else user_id
+    db_task = session.get(Task, task_id)
+
+    if not db_task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if db_task.user_id != user_uuid:
+        raise HTTPException(status_code=403, detail="Not authorized to access this task")
+
+    # Update the task fields
+    for field, value in task_update.dict(exclude_unset=True).items():
+        setattr(db_task, field, value)
+
+    # Update the updated_at timestamp
+    db_task.updated_at = datetime.utcnow()
+
+    session.add(db_task)
+    session.commit()
+    session.refresh(db_task)
+    return db_task
+
+
+@app.patch("/api/tasks/{task_id}/toggle", response_model=TaskRead)
+def toggle_task_completion(
+    task_id: uuid.UUID,
+    user_id: str = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    # Toggle the completion status of a task
+    user_uuid = uuid.UUID(user_id) if isinstance(user_id, str) else user_id
+    db_task = session.get(Task, task_id)
+
+    if not db_task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if db_task.user_id != user_uuid:
+        raise HTTPException(status_code=403, detail="Not authorized to access this task")
+
+    # Toggle the completion status
+    db_task.completed = not db_task.completed
+    # Update the updated_at timestamp
+    db_task.updated_at = datetime.utcnow()
+    session.add(db_task)
+    session.commit()
+    session.refresh(db_task)
+    return db_task
+
+
+@app.delete("/api/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_task(
+    task_id: uuid.UUID,
+    user_id: str = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    # Delete a specific task for the authenticated user
+    user_uuid = uuid.UUID(user_id) if isinstance(user_id, str) else user_id
+    db_task = session.get(Task, task_id)
+
+    if not db_task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if db_task.user_id != user_uuid:
+        raise HTTPException(status_code=403, detail="Not authorized to access this task")
+
+    session.delete(db_task)
+    session.commit()
+    return

@@ -1,4 +1,4 @@
-# AGENTS.md - Project Constitution
+# constitution.md - Project Constitution
 
 ## Core Governance Principles
 
@@ -20,7 +20,7 @@ The following constraints are non-negotiable and must be strictly enforced:
 1. **No Direct Application Code Creation**: AI agents must NOT write any application code directly
 2. **No Feature Implementation**: AI agents must NOT implement features outside of specification scope
 3. **No Executable File Generation**: AI agents must NOT generate executable files or configurations without explicit specification
-4. **Specification Adherence Only**: Output is limited to the AGENTS.md document as specified
+4. **Specification Adherence Only**: Output is limited to the constitution.md document as specified
 
 ## Phase Governance Requirements
 
@@ -40,7 +40,7 @@ The following constraints are non-negotiable and must be strictly enforced:
 - Maintains separation between governance, specifications, and generated code
 
 ### AI Agent (Claude Code) Role
-- Reads AGENTS.md and all relevant specifications before performing any action
+- Reads constitution.md and all relevant specifications before performing any action
 - Generates implementation strictly from provided specifications only
 - Must not assume, infer, or invent requirements beyond what is specified
 - Must request clarification when specifications are ambiguous or incomplete
@@ -68,7 +68,7 @@ When errors or inconsistencies are encountered:
 ## Repository Governance Standards
 
 Maintain clear separation between:
-- Governance documents (AGENTS.md)
+- Governance documents (constitution.md)
 - Specifications (spec files)
 - Generated code and implementation artifacts
 

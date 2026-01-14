@@ -19,3 +19,6 @@ coverage.xml
 *.log
 .DS_Store
 Thumbs.db
+.env
+todo_test.db
+nul
