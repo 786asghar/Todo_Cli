@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '../../lib/api';
+import ChatComponent from '../components/ChatComponent';
 
 interface Task {
   id: string;  // UUID as string
@@ -179,134 +180,145 @@ export default function Dashboard() {
             </div>
           )}
 
-          <div className="mt-6">
-            <form onSubmit={handleAddTask} className="mb-8 p-4 bg-white rounded-lg shadow">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Add New Task</h2>
-              <div className="grid grid-cols-1 gap-6">
-                <div>
-                  <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                    Title
-                  </label>
-                  <input
-                    type="text"
-                    id="title"
-                    value={newTask.title}
-                    onChange={(e) => setNewTask({...newTask, title: e.target.value})}
-                    required
-                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                    Description
-                  </label>
-                  <textarea
-                    id="description"
-                    value={newTask.description}
-                    onChange={(e) => setNewTask({...newTask, description: e.target.value})}
-                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    rows={3}
-                  />
-                </div>
-                <div>
-                  <button
-                    type="submit"
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    Add Task
-                  </button>
-                </div>
-              </div>
-            </form>
-
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left column - Task management */}
             <div>
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Your Tasks</h2>
-              {tasks.length === 0 ? (
-                <p className="text-gray-500">No tasks yet. Add a new task to get started!</p>
-              ) : (
-                <ul className="bg-white rounded-lg shadow overflow-hidden">
-                  {tasks.map((task) => (
-                    editTask.id === task.id ? (
-                      // Edit form for the task being edited
-                      <li key={task.id} className="border-b border-gray-200 last:border-b-0 p-4 bg-blue-50">
-                        <form onSubmit={handleUpdateTask} className="space-y-3">
-                          <div>
-                            <input
-                              type="text"
-                              value={editTask.title}
-                              onChange={(e) => setEditTask({...editTask, title: e.target.value})}
-                              className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                              required
-                            />
+              <form onSubmit={handleAddTask} className="mb-8 p-4 bg-white rounded-lg shadow">
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Add New Task</h2>
+                <div className="grid grid-cols-1 gap-6">
+                  <div>
+                    <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+                      Title
+                    </label>
+                    <input
+                      type="text"
+                      id="title"
+                      value={newTask.title}
+                      onChange={(e) => setNewTask({...newTask, title: e.target.value})}
+                      required
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                      Description
+                    </label>
+                    <textarea
+                      id="description"
+                      value={newTask.description}
+                      onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <button
+                      type="submit"
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                      Add Task
+                    </button>
+                  </div>
+                </div>
+              </form>
+
+              <div>
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Your Tasks</h2>
+                {tasks.length === 0 ? (
+                  <p className="text-gray-500">No tasks yet. Add a new task to get started!</p>
+                ) : (
+                  <ul className="bg-white rounded-lg shadow overflow-hidden">
+                    {tasks.map((task) => (
+                      editTask.id === task.id ? (
+                        // Edit form for the task being edited
+                        <li key={task.id} className="border-b border-gray-200 last:border-b-0 p-4 bg-blue-50">
+                          <form onSubmit={handleUpdateTask} className="space-y-3">
+                            <div>
+                              <input
+                                type="text"
+                                value={editTask.title}
+                                onChange={(e) => setEditTask({...editTask, title: e.target.value})}
+                                className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <textarea
+                                value={editTask.description}
+                                onChange={(e) => setEditTask({...editTask, description: e.target.value})}
+                                className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                rows={2}
+                              />
+                            </div>
+                            <div className="flex space-x-2">
+                              <button
+                                type="submit"
+                                className="px-3 py-1 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded"
+                              >
+                                Save
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleCancelEdit}
+                                className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </form>
+                        </li>
+                      ) : (
+                        // Normal task display
+                        <li key={task.id} className="border-b border-gray-200 last:border-b-0">
+                          <div className="p-4 flex items-center justify-between">
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                checked={task.completed}
+                                onChange={() => handleToggleTask(task.id)}
+                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                              />
+                              <span className={`ml-3 ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                                {task.title}
+                              </span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm text-gray-500">
+                                {new Date(task.created_at).toLocaleDateString()}
+                              </span>
+                              <button
+                                onClick={() => handleEditTask(task)}
+                                className="ml-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-900"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTask(task.id)}
+                                className="ml-2 px-3 py-1 text-sm text-red-600 hover:text-red-900"
+                              >
+                                Delete
+                              </button>
+                            </div>
                           </div>
-                          <div>
-                            <textarea
-                              value={editTask.description}
-                              onChange={(e) => setEditTask({...editTask, description: e.target.value})}
-                              className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                              rows={2}
-                            />
-                          </div>
-                          <div className="flex space-x-2">
-                            <button
-                              type="submit"
-                              className="px-3 py-1 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded"
-                            >
-                              Save
-                            </button>
-                            <button
-                              type="button"
-                              onClick={handleCancelEdit}
-                              className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </form>
-                      </li>
-                    ) : (
-                      // Normal task display
-                      <li key={task.id} className="border-b border-gray-200 last:border-b-0">
-                        <div className="p-4 flex items-center justify-between">
-                          <div className="flex items-center">
-                            <input
-                              type="checkbox"
-                              checked={task.completed}
-                              onChange={() => handleToggleTask(task.id)}
-                              className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                            />
-                            <span className={`ml-3 ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                              {task.title}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm text-gray-500">
-                              {new Date(task.created_at).toLocaleDateString()}
-                            </span>
-                            <button
-                              onClick={() => handleEditTask(task)}
-                              className="ml-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-900"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteTask(task.id)}
-                              className="ml-2 px-3 py-1 text-sm text-red-600 hover:text-red-900"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                        {task.description && (
-                          <div className="ml-7 pl-4 pb-2 text-sm text-gray-600">
-                            {task.description}
-                          </div>
-                        )}
-                      </li>
-                    )
-                  ))}
-                </ul>
-              )}
+                          {task.description && (
+                            <div className="ml-7 pl-4 pb-2 text-sm text-gray-600">
+                              {task.description}
+                            </div>
+                          )}
+                        </li>
+                      )
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            {/* Right column - Chat component */}
+            <div>
+              <div className="bg-white rounded-lg shadow p-4">
+                <h2 className="text-lg font-medium text-gray-900 mb-4">AI Assistant</h2>
+                <ChatComponent />
+              </div>
             </div>
           </div>
         </div>

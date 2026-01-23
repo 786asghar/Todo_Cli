@@ -7,3 +7,4 @@ passlib[bcrypt]==1.7.4
 python-multipart==0.0.6
 asyncpg==0.29.0
 psycopg[binary]==3.1.18
+cohere==4.3.1

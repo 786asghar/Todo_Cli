@@ -11,13 +11,22 @@ export const api = {
       ...options.headers,
     };
 
+    // Set default timeout of 30 seconds if not specified
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     try {
       console.log(`Making request to: ${API_BASE_URL}${endpoint}`);
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+
+      const requestOptions: RequestInit = {
         ...options,
         headers,
-      });
+        signal: controller.signal // Add abort signal for timeout
+      };
 
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, requestOptions);
+
+      clearTimeout(timeoutId);
       console.log(`Response status: ${response.status}`);
 
       // If response is 401, redirect to login
@@ -30,8 +39,18 @@ export const api = {
       // Return the response object so the caller can handle it appropriately
       return response;
     } catch (error) {
+      clearTimeout(timeoutId);
+
+      if ((error as Error).name === 'AbortError') {
+        console.error('API request timed out:', endpoint);
+        throw new Error(`Request to ${endpoint} timed out`);
+      }
+
       console.error('API request failed:', error);
       throw error;
+    } finally {
+      // Cleanup: Ensure timeout is cleared even if there are other issues
+      clearTimeout(timeoutId);
     }
   },
 
@@ -61,12 +80,29 @@ export const api = {
       console.error(`POST request failed with status: ${response.status}`);
       const errorText = await response.text();
       console.error('Error response:', errorText);
-      throw new Error(`Request failed with status ${response.status}`);
+      throw new Error(`Request failed with status ${response.status}: ${errorText}`);
     }
 
-    const result = await response.json();
-    console.log(`POST response data:`, result);
-    return result;
+    // Check if response body is empty
+    const responseBody = await response.text();
+    console.log(`Raw POST response text:`, responseBody);
+
+    if (!responseBody || responseBody.trim() === '') {
+      console.warn(`Empty response body for POST request to ${endpoint}`);
+      return {}; // Return empty object for empty responses
+    }
+
+    try {
+      const result = JSON.parse(responseBody);
+      console.log(`POST parsed response data:`, result);
+      return result;
+    } catch (parseError) {
+      console.error(`Failed to parse JSON response:`, parseError);
+      console.error(`Raw response:`, responseBody);
+
+      // If we can't parse the JSON, return the raw text as an error response
+      throw new Error(`Invalid JSON response from server: ${responseBody}`);
+    }
   },
 
   async put(endpoint: string, data: any) {

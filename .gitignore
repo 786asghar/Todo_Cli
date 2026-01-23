@@ -22,3 +22,8 @@ Thumbs.db
 .env
 todo_test.db
 nul
+node_modules/
+.next/
+dist/
+build/
+*.pack

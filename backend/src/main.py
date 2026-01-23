@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from sqlmodel import Session, select
 from typing import List
 import uuid
@@ -14,6 +15,7 @@ try:
     from .api.auth import router as auth_router
     from .api.skills import router as skills_router
     from .api.agents import router as agents_router
+    from .api.chatbot.chat_controller import router as chat_router
     from .agents.agent_registry import AgentRegistry
     from .agents.config import AgentConfig
 except ImportError:
@@ -28,6 +30,7 @@ except ImportError:
     from api.auth import router as auth_router
     from api.skills import router as skills_router
     from api.agents import router as agents_router
+    from api.chatbot.chat_controller import router as chat_router
     from agents.agent_registry import AgentRegistry
     from agents.config import AgentConfig
 
@@ -45,6 +48,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(skills_router)
 app.include_router(agents_router)
+app.include_router(chat_router)
 
 
 # Add CORS headers to all responses
@@ -63,8 +67,22 @@ agent_registry = AgentRegistry()
 
 
 @app.on_event("startup")
-def on_startup():
+async def on_startup():
     create_db_and_tables()
+
+    # Validate OpenRouter environment variables at startup (FAIL FAST)
+    import os
+    api_key = os.getenv("OPEN_ROUTER_API_KEY")
+    base_url = os.getenv("OPEN_ROUTER_URL")
+
+    if not api_key:
+        raise ValueError("OPEN_ROUTER_API_KEY environment variable is not set. Chat functionality cannot start.")
+
+    if not base_url:
+        raise ValueError("OPEN_ROUTER_URL environment variable is not set. Chat functionality cannot start.")
+
+    if base_url != "https://openrouter.ai/api/v1/chat/completions":
+        print(f"WARNING: OPEN_ROUTER_URL does not match expected URL. Expected: https://openrouter.ai/api/v1/chat/completions, Got: {base_url}")
 
     # Initialize default agents
     try:
@@ -221,3 +239,35 @@ def delete_task(
     session.delete(db_task)
     session.commit()
     return
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    # Serve the favicon file
+    import os
+    from pathlib import Path
+
+    favicon_path = Path(__file__).parent / "static" / "favicon.ico"
+
+    if favicon_path.exists():
+        with open(favicon_path, "rb") as f:
+            content = f.read()
+        return Response(content=content, media_type="image/x-icon")
+    else:
+        # Return a minimal transparent favicon if the file doesn't exist
+        # This is a minimal 16x16 transparent favicon in bytes
+        transparent_favicon = (
+            b'\x00\x00\x01\x00\x01\x00\x10\x10\x00\x00\x01\x00\x08\x00'
+            b'\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+        )
+        return Response(content=transparent_favicon, media_type="image/x-icon")
