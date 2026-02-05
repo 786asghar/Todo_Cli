@@ -1,14 +1,6 @@
 'use client';
 
-import { createAuthClient } from 'better-auth/react';
-import { AuthClientProvider } from 'better-auth/react';
 import { useEffect, useState } from 'react';
-
-// Initialize auth client
-const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || 'http://localhost:3004',
-  fetch: globalThis.fetch,
-});
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [isMounted, setIsMounted] = useState(false);
@@ -23,9 +15,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
+  // Since better-auth/react doesn't export an AuthProvider, just return children
+  // Individual components will create their own auth client instances as needed
   return (
-    <AuthClientProvider client={authClient}>
+    <>
       {children}
-    </AuthClientProvider>
+    </>
   );
 }

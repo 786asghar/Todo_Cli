@@ -24,8 +24,12 @@ except ImportError:
 # Get database URL from environment, with a default for development
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./todo_test.db")
 
-# Create the engine
-engine = create_engine(DATABASE_URL, echo=True)
+# Create the engine with appropriate settings for production
+connect_args = {}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args["check_same_thread"] = False
+
+engine = create_engine(DATABASE_URL, echo=True, connect_args=connect_args)
 
 
 # Create tables function

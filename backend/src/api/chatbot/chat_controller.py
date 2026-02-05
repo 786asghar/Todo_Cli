@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
 from .openrouter_client import openrouter_client
+from .task_operations import TaskOperationsHandler
 import logging
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
@@ -21,10 +22,15 @@ class ChatResponse(BaseModel):
     data: Optional[dict] = None
 
 
+# Initialize the task operations handler
+task_handler = TaskOperationsHandler()
+
+
 @router.post("/", response_model=ChatResponse)
 async def chat_endpoint(chat_request: ChatRequest):
     """
-    Main chat endpoint that handles user messages and returns OpenRouter responses
+    Main chat endpoint that handles user messages and returns responses.
+    Prioritizes direct task operations over LLM responses for task-related commands.
     """
     user_message = chat_request.message
 
@@ -40,6 +46,18 @@ async def chat_endpoint(chat_request: ChatRequest):
             message=error_msg
         )
 
+    # First, try to handle as a direct task operation
+    task_result = task_handler.process_task_command(user_message)
+    if task_result is not None:
+        # This is a task operation, return the direct result
+        logger.info(f"Handled as direct task operation: {task_result['status']}")
+        return ChatResponse(
+            status=task_result["status"],
+            message=task_result["message"],
+            data=task_result.get("data")
+        )
+
+    # If not a task operation, use OpenRouter for general chat
     try:
         # Generate response from OpenRouter (await the async call)
         openrouter_response = await openrouter_client.generate_response(user_message)

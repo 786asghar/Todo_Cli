@@ -17,6 +17,14 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/features/*": ["./src/features/*"],
+      "@/app/*": ["./src/app/*"]
+    },
     "plugins": [
       {
         "name": "next"

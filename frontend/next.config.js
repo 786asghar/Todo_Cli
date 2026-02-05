@@ -16,6 +16,7 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['better-auth'],
   },
+  swcMinify: false, // Disable SWC minification to avoid Unicode issues
 };
 
 module.exports = nextConfig;
