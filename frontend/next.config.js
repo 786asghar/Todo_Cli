@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
+  output: "standalone",
   webpack: (config, { isServer }) => {
     // Handle crypto module for client-side
     if (!isServer) {
